@@ -1,388 +1,248 @@
-import React, { useState, useEffect } from 'react';
-import { X, ArrowRight, BookOpen, Sparkles, Loader2 } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Silavm 💖</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Poppins:wght@300;400&display=swap');
 
-// A realistic, glowing lily illustration
-const RealisticLily = ({ className, isDetail = false }) => (
-  <svg 
-    viewBox="0 0 200 200" 
-    className={`${className} ${isDetail ? 'animate-bloom' : ''}`}
-    style={{ filter: 'drop-shadow(0px 10px 20px rgba(212,175,55,0.15))' }}
-  >
-    <defs>
-      <radialGradient id="lilyGrad" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="#d4af37" />
-        <stop offset="25%" stopColor="#fff8e7" />
-        <stop offset="100%" stopColor="#ffffff" />
-      </radialGradient>
-      <radialGradient id="leafGrad" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="#2a3b22" />
-        <stop offset="100%" stopColor="#142010" />
-      </radialGradient>
-    </defs>
-    
-    <path d="M100 180 Q110 140 100 80" fill="none" stroke="#2a3b22" strokeWidth="4" strokeLinecap="round" />
-    <path d="M102 150 Q130 140 140 110 Q115 135 102 145" fill="url(#leafGrad)" />
-    <path d="M98 160 Q60 150 50 120 Q80 145 98 155" fill="url(#leafGrad)" />
-
-    <g>
-      <path d="M100 80 Q140 20 170 80 Q130 90 100 80" fill="url(#lilyGrad)" opacity="0.95" />
-      <path d="M100 80 Q60 20 30 80 Q70 90 100 80" fill="url(#lilyGrad)" opacity="0.95" />
-      <path d="M100 80 Q100 10 130 40 Q115 70 100 80" fill="url(#lilyGrad)" opacity="0.9" />
-      <path d="M100 80 Q150 100 130 150 Q90 110 100 80" fill="url(#lilyGrad)" />
-      <path d="M100 80 Q50 100 70 150 Q110 110 100 80" fill="url(#lilyGrad)" />
-      <path d="M100 80 Q100 160 70 120 Q90 100 100 80" fill="url(#lilyGrad)" />
-      <path d="M100 80 Q100 160 130 120 Q110 100 100 80" fill="url(#lilyGrad)" />
-    </g>
-
-    <g stroke="#d4af37" strokeWidth="1.5">
-      <line x1="100" y1="80" x2="110" y2="50" />
-      <line x1="100" y1="80" x2="90" y2="50" />
-      <line x1="100" y1="80" x2="100" y2="45" />
-    </g>
-    <circle cx="110" cy="50" r="3" fill="#8a6d1c" />
-    <circle cx="90" cy="50" r="3" fill="#8a6d1c" />
-    <circle cx="100" cy="45" r="3" fill="#8a6d1c" />
-  </svg>
-);
-
-const toRoman = (num) => {
-  const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
-  return roman[num] || num;
-};
-
-const App = () => {
-  const [view, setView] = useState('intro'); 
-  const [activeIndex, setActiveIndex] = useState(null);
-  const [mounted, setMounted] = useState(false);
-  
-  const [aiExpansion, setAiExpansion] = useState('');
-  const [isExpanding, setIsExpanding] = useState(false);
-  const [aiPoem, setAiPoem] = useState('');
-  const [isPoemGenerating, setIsPoemGenerating] = useState(false);
-  const [showPoemModal, setShowPoemModal] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const messages = [
-    "Love you gyanakam", "Az guri te bm jwankilakam", "Evînê te germiya min e, Tu xewn û hêvîya min î", 
-    "Az hayrana cave te bm", "you are so cute", "i like your eyebrows", 
-    "All i need is just a paddle", "i became a poet for you", "xoda tum le nastene"
-  ];
-
-  const handleOpenDetail = (index) => {
-    setActiveIndex(index);
-    setAiExpansion('');
-    setView('detail');
-  };
-
-  const handleCloseDetail = () => {
-    setView('archive');
-    setTimeout(() => {
-      setActiveIndex(null);
-      setAiExpansion('');
-    }, 500); 
-  };
-
-  const fetchGeminiWithBackoff = async (prompt) => {
-    // The environment automatically provides the API key here
-    const apiKey = ""; 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-    
-    const payload = {
-      contents: [{ parts: [{ text: prompt }] }],
-      systemInstruction: { 
-        parts: [{ 
-          text: "You are a deeply romantic, elegant poet. Keep your responses beautiful, brief, and perfectly suited to an academic garden of love. No intro/outro text, just the verse." 
-        }] 
-      },
-      generationConfig: {
-        temperature: 0.7,
-      }
-    };
-    
-    const delays = [1000, 2000, 4000, 8000, 16000];
-    
-    for (let retries = 0; retries < 5; retries++) {
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        
-        if (!response.ok) {
-           throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || 'The archive remains silent...';
-      } catch (error) {
-        if (retries === 4) return "The connection to the garden was lost. Please try again later.";
-        await new Promise(resolve => setTimeout(resolve, delays[retries]));
-      }
-    }
-  };
-
-  const handleExpandMessage = async (message) => {
-    setIsExpanding(true);
-    const prompt = `Write a short, deeply romantic expansion (2 sentences max) expanding beautifully on this message meant for a girl named Silavm: "${message}"`;
-    const response = await fetchGeminiWithBackoff(prompt);
-    setAiExpansion(response);
-    setIsExpanding(false);
-  };
-
-  const handleGeneratePoem = async () => {
-    setIsPoemGenerating(true);
-    setShowPoemModal(true);
-    const prompt = `Write a 4-line romantic poem for Silavm about glowing lilies in a dark magical garden representing eternal love.`;
-    const response = await fetchGeminiWithBackoff(prompt);
-    setAiPoem(response);
-    setIsPoemGenerating(false);
-  };
-
-  return (
-    <div className="min-h-screen bg-[#050505] text-[#e8e4d9] overflow-hidden relative">
-      <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400;1,600&family=JetBrains+Mono:wght@100;200&display=swap');
-        
-        body { 
-          font-family: 'Cormorant Garamond', serif; 
-          background-color: #050505;
-        }
-        
-        .font-cinzel { font-family: 'Cinzel', serif; }
-        .font-serif { font-family: 'Cormorant Garamond', serif; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-
-        /* Custom Scrollbar for the archive */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #050505; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #333; }
-
-        /* Bloom Animation */
-        .animate-bloom {
-          animation: bloom 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-          transform-origin: bottom center;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        @keyframes bloom {
-          0% { transform: scale(0.6) translateY(20px); opacity: 0; filter: brightness(0.5); }
-          100% { transform: scale(1) translateY(0); opacity: 1; filter: brightness(1); }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #ffe6ea;
+            /* Beautiful white and pink lilies background from Unsplash */
+            background-image: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)), url('https://images.unsplash.com/photo-1593005510509-d05b264f1c9c?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .text-glow { text-shadow: 0 0 40px rgba(255,255,255,0.1); }
-      `}} />
+        /* --- Welcome Screen --- */
+        #welcome-screen {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s ease, opacity 0.5s ease;
+            backdrop-filter: blur(5px);
+        }
 
-      {/* Background Texture/Gradient */}
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.05)_0%,transparent_70%)]" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10" />
-      </div>
+        #welcome-screen:hover {
+            transform: scale(1.05);
+        }
 
-      {/* --- INTRO VIEW --- */}
-      {view === 'intro' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-8">
-          <div className={`transition-all duration-1000 delay-300 transform ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'} flex flex-col items-center text-center mt-8`}>
-            
-            <h1 className="text-5xl md:text-7xl font-cinzel font-light tracking-[0.15em] mb-4 text-white">
-              For Silavm
-            </h1>
-            
-            <p className="uppercase tracking-[0.4em] text-xs text-[#d4af37] mb-12 font-light">
-              Vol. I — The Archive
-            </p>
+        #welcome-screen h1 {
+            font-family: 'Dancing Script', cursive;
+            color: #d81b60;
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+        }
 
-            <button 
-              onClick={() => setView('archive')}
-              className="group relative px-8 py-4 bg-transparent overflow-hidden border border-[#2a2a2a] hover:border-[#d4af37] transition-colors duration-500 rounded-sm"
-            >
-              <div className="absolute inset-0 bg-[#d4af37] translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 ease-in-out" />
-              <span className="relative z-10 flex items-center gap-3 text-sm tracking-widest uppercase text-[#8a8575] group-hover:text-black transition-colors duration-500 font-medium">
-                Enter Archive <ArrowRight className="w-4 h-4" />
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
+        #welcome-screen p {
+            color: #666;
+            font-size: 1.1rem;
+            animation: pulse 2s infinite;
+        }
 
-      {/* --- ARCHIVE GRID VIEW --- */}
-      <div 
-        className={`absolute inset-0 z-10 flex flex-col transition-all duration-1000 ease-in-out ${view === 'archive' ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-12 pointer-events-none'}`}
-      >
-        <header className="flex flex-col md:flex-row items-center justify-between p-8 border-b border-[#1a1a1a] bg-[#050505]/90 backdrop-blur-sm z-20">
-          <div className="flex items-center gap-4">
-            <BookOpen className="w-5 h-5 text-[#d4af37]" />
-            <h2 className="font-cinzel tracking-[0.2em] text-lg text-white">GARDEN OF MY HEART</h2>
-          </div>
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 mt-4 md:mt-0">
-            <button 
-              onClick={handleGeneratePoem}
-              disabled={isPoemGenerating}
-              className="group flex items-center gap-2 text-[#d4af37] hover:text-white transition-colors text-xs tracking-widest uppercase border border-[#d4af37]/30 hover:border-[#d4af37] px-4 py-2 rounded-sm bg-[#d4af37]/5"
-            >
-              {isPoemGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 group-hover:animate-pulse" />}
-              Synthesize Poem
-            </button>
-            <p className="font-serif italic text-[#8a8575] text-sm hidden md:block">
-              Catalogued Specimens: {messages.length < 10 ? `0${messages.length}` : messages.length}
-            </p>
-          </div>
-        </header>
+        /* --- Lily Garden Screen --- */
+        #garden-screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            overflow-y: auto;
+        }
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-px bg-[#1a1a1a] border border-[#1a1a1a]">
-            {messages.map((_, index) => (
-              <div 
-                key={index}
-                onClick={() => handleOpenDetail(index)}
-                className="group relative bg-[#050505] aspect-square flex flex-col items-center justify-center p-8 cursor-pointer overflow-hidden"
-              >
-                {/* Hover Glow Effect */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.08)_0%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                
-                <div className="absolute top-6 left-6 font-cinzel text-xs text-[#555] group-hover:text-[#d4af37] transition-colors duration-500">
-                  FIG. {toRoman(index)}
-                </div>
-                <div className="absolute bottom-6 right-6 font-mono text-[10px] tracking-widest text-[#333] group-hover:text-[#666] transition-colors duration-500">
-                  REF-{index + 1}00
-                </div>
+        .garden-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 900px;
+            margin: 50px auto;
+        }
 
-                <div className="w-24 h-24 transition-all duration-700 transform group-hover:scale-110">
-                  <RealisticLily className="w-full h-full" />
-                </div>
-                
-                <div className="absolute bottom-6 left-0 w-full text-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
-                  <span className="text-[10px] uppercase tracking-[0.3em] text-[#8a8575]">Examine Specimen</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-12 mb-8">
-            <button 
-              onClick={() => setView('intro')}
-              className="text-[#555] hover:text-[#d4af37] text-xs tracking-[0.2em] uppercase transition-colors"
-            >
-              Close Archive
-            </button>
-          </div>
-        </main>
-      </div>
+        .lily {
+            width: 120px;
+            height: 120px;
+            background-image: url('https://cdn-icons-png.flaticon.com/512/862/862080.png'); /* Lily Icon */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            filter: drop-shadow(0 5px 10px rgba(216, 27, 96, 0.3));
+            animation: float 4s ease-in-out infinite;
+        }
 
-      {/* --- DETAIL VIEW --- */}
-      <div 
-        className={`fixed inset-0 z-[60] bg-[#050505] flex transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] ${view === 'detail' ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-[100%] pointer-events-none'}`}
-      >
-        {activeIndex !== null && (
-          <div className="flex flex-col md:flex-row w-full h-full relative">
-            
-            <button 
-              onClick={handleCloseDetail}
-              className="absolute top-8 right-8 z-[70] text-[#8a8575] hover:text-white transition-colors"
-            >
-              <X className="w-8 h-8" strokeWidth={1} />
-            </button>
+        .lily:hover {
+            transform: scale(1.2) rotate(5deg);
+            filter: drop-shadow(0 8px 15px rgba(216, 27, 96, 0.5));
+        }
 
-            {/* Left Panel: The Illustration */}
-            <div className="w-full md:w-1/2 h-1/2 md:h-full border-b md:border-b-0 md:border-r border-[#1a1a1a] flex flex-col items-center justify-center relative bg-[#080808]">
-              <div className="absolute top-8 left-8 font-cinzel text-sm text-[#d4af37]">
-                FIG. {toRoman(activeIndex)}
-              </div>
-              <div className="w-48 h-48 md:w-80 md:h-80">
-                <RealisticLily isDetail={true} className="w-full h-full" />
-              </div>
-              <div className="absolute bottom-8 right-8 font-mono text-xs text-[#444] uppercase tracking-widest">
-                Genus: Lilium
-              </div>
-            </div>
+        /* Stagger the floating animation for a natural look */
+        .lily:nth-child(2) { animation-delay: 0.5s; }
+        .lily:nth-child(3) { animation-delay: 1s; }
+        .lily:nth-child(4) { animation-delay: 1.5s; }
+        .lily:nth-child(5) { animation-delay: 2s; }
+        .lily:nth-child(6) { animation-delay: 2.5s; }
 
-            {/* Right Panel: The Message */}
-            <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col items-center justify-center p-8 md:p-20 relative bg-gradient-to-br from-[#050505] to-[#0a0a0a] overflow-y-auto">
-              
-              <div className="max-w-md w-full relative z-10 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500 my-auto">
-                <h3 className="uppercase tracking-[0.3em] text-xs text-[#8a8575] mb-8 border-b border-[#1a1a1a] pb-4">
-                  Recorded Extract
-                </h3>
-                
-                <p className="font-serif text-3xl md:text-5xl leading-tight text-white mb-12 italic text-glow">
-                  "{messages[activeIndex]}"
-                </p>
-                
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-8 h-px bg-[#d4af37]" />
-                  <span className="font-cinzel text-sm text-[#d4af37] tracking-widest">A.K.</span>
-                </div>
+        /* --- Hidden Message Modal --- */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
 
-                {/* AI Expansion Feature */}
-                <div className="mt-8 border-t border-[#1a1a1a] pt-8 min-h-[120px]">
-                  {!aiExpansion && !isExpanding && (
-                    <button 
-                      onClick={() => handleExpandMessage(messages[activeIndex])}
-                      className="group flex items-center gap-3 text-[#8a8575] hover:text-[#d4af37] transition-colors text-xs uppercase tracking-[0.2em]"
-                    >
-                      <Sparkles className="w-4 h-4 group-hover:animate-pulse" />
-                      Extrapolate Sentiment
-                    </button>
-                  )}
-                  {isExpanding && (
-                    <div className="flex items-center gap-3 text-[#8a8575] text-xs uppercase tracking-[0.2em] animate-pulse">
-                      <Loader2 className="w-4 h-4 animate-spin text-[#d4af37]" />
-                      Consulting the Archive...
-                    </div>
-                  )}
-                  {aiExpansion && (
-                    <div className="animate-in fade-in slide-in-from-top-4 duration-1000">
-                      <h4 className="uppercase tracking-[0.2em] text-[10px] text-[#d4af37] mb-3 flex items-center gap-2">
-                        <Sparkles className="w-3 h-3" /> Extrapolated Sentiment
-                      </h4>
-                      <p className="font-serif italic text-[#a39e8e] text-lg leading-relaxed">
-                        {aiExpansion}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 80%;
+            width: 400px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            transform: translateY(20px);
+            transition: transform 0.4s ease;
+            border: 2px solid #ffe6ea;
+        }
 
-          </div>
-        )}
-      </div>
+        .modal-content p {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5rem;
+            color: #c2185b;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
 
-      {/* --- AI Poem Modal --- */}
-      {showPoemModal && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-[#050505]/80 backdrop-blur-sm animate-in fade-in duration-500">
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8 md:p-12 max-w-lg w-full relative shadow-2xl">
-            <button 
-              onClick={() => setShowPoemModal(false)}
-              className="absolute top-6 right-6 text-[#8a8575] hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="text-center">
-              <Sparkles className="w-6 h-6 text-[#d4af37] mx-auto mb-6" />
-              <h3 className="font-cinzel text-sm text-[#d4af37] tracking-[0.3em] uppercase mb-8 border-b border-[#1a1a1a] pb-4 inline-block">
-                Synthesized Verse
-              </h3>
-              {isPoemGenerating ? (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#d4af37] mb-4" />
-                  <p className="font-serif italic text-[#8a8575]">Gathering petals of thought...</p>
-                </div>
-              ) : (
-                <div className="font-serif text-xl md:text-2xl leading-loose text-white italic whitespace-pre-line animate-in fade-in zoom-in duration-700">
-                  {aiPoem}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+        .close-btn {
+            background: #d81b60;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            transition: background 0.3s ease;
+        }
 
+        .close-btn:hover {
+            background: #ad144d;
+        }
+
+        /* --- Animations --- */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 600px) {
+            #welcome-screen h1 { font-size: 2.8rem; }
+            .lily { width: 90px; height: 90px; }
+            .modal-content p { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-screen" onclick="enterGarden()">
+        <h1>Hey Silavm , <br>click on this 💖</h1>
+        <p>(Tap to open)</p>
     </div>
-  );
-};
 
-export default App;
+    <div id="garden-screen">
+        <div class="garden-container">
+            <div class="lily" data-message="Love you gyanakam ❤️" onclick="showMessage(this)"></div>
+            <div class="lily" data-message="Az guri te bm jwankilakam ✨" onclick="showMessage(this)"></div>
+            <div class="lily" data-message="You are my favorite person in the whole world 🌸" onclick="showMessage(this)"></div>
+            <div class="lily" data-message="Your smile lights up my darkest days 🌷" onclick="showMessage(this)"></div>
+            <div class="lily" data-message="Every moment with you is a blessing 💖" onclick="showMessage(this)"></div>
+            <div class="lily" data-message="I am so lucky to have you, my love 🥰" onclick="showMessage(this)"></div>
+        </div>
+    </div>
+
+    <div id="modal">
+        <div class="modal-content" id="modal-box">
+            <p id="secret-message"></p>
+            <button class="close-btn" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function enterGarden() {
+            // Hide welcome screen and show garden
+            document.getElementById('welcome-screen').style.display = 'none';
+            
+            const garden = document.getElementById('garden-screen');
+            garden.style.display = 'block';
+            
+            // Allow scrolling once in the garden
+            document.body.style.overflow = 'auto'; 
+        }
+
+        function showMessage(element) {
+            // Get the hidden message from the clicked lily
+            const message = element.getAttribute('data-message');
+            
+            // Set the message text
+            document.getElementById('secret-message').innerText = message;
+            
+            // Show the modal with animation
+            const modal = document.getElementById('modal');
+            const modalBox = document.getElementById('modal-box');
+            
+            modal.style.display = 'flex';
+            
+            // Small delay to allow CSS transitions to trigger
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modalBox.style.transform = 'translateY(0)';
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            const modalBox = document.getElementById('modal-box');
+            
+            // Animate out
+            modal.style.opacity = '0';
+            modalBox.style.transform = 'translateY(20px)';
+            
+            // Wait for animation to finish before hiding
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 400);
+        }
+    </script>
+
+</body>
+</html>
